@@ -1,0 +1,23 @@
+package html
+
+import (
+	"io/ioutil"
+	"net/http"
+	"regexp"
+)
+
+// TituloSites obtém o título de uma página html
+func TituloSites(urls ...string) <-chan string {
+	c := make(chan string)
+	// quero fazer a leitura para cada url
+	for _, url := range urls {
+		go func(url string) {
+			resp, _ := http.Get(url) // para pegar o url com http e desconsiderando o erro
+			html, _ := ioutil.ReadAll(resp.Body)
+
+			r, _ := regexp.Compile("<title>(.*?)<\\/title>") // (.*?) captura o grupo de <title> de um site
+			c <- r.FindStringSubmatch(string(html))[1]       // vou encontrar a string convertida do html que está no índice 1
+		}(url) // toda vez que o programa executar a goroutine, será disparado para executar novamente de forma independente, por isso (url) no fianl da goroutine
+	}
+	return c
+}
